@@ -1,10 +1,102 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function Home() {
+  const [tarefas, setTarefas] = useState([]);
   const [tarefaSelecionada, setTarefaSelecionada] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [excluindo, setExcluindo] = useState(false);
+  const [erro, setErro] = useState("");
+  const [busca, setBusca] = useState("");
+
+  useEffect(() => {
+    buscarTarefas();
+  }, []);
+
+  async function buscarTarefas() {
+    try {
+      setCarregando(true);
+
+      const resposta = await fetch("http://localhost:3001/tarefas");
+
+      if (!resposta.ok) {
+        throw new Error("Erro ao buscar tarefas");
+      }
+
+      const dados = await resposta.json();
+
+      setTarefas(dados);
+      setErro("");
+    } catch (error) {
+      console.error(error);
+      setErro("Não foi possível carregar as tarefas.");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function excluirTarefa() {
+    if (!tarefaSelecionada) {
+      return;
+    }
+
+    try {
+      setExcluindo(true);
+      setErro("");
+
+      const resposta = await fetch(
+        `http://localhost:3001/tarefas/${tarefaSelecionada.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!resposta.ok) {
+        const dadosErro = await resposta.json();
+
+        throw new Error(dadosErro.mensagem || "Erro ao excluir tarefa");
+      }
+
+      setTarefaSelecionada(null);
+
+      await buscarTarefas();
+    } catch (error) {
+      console.error(error);
+      setErro(error.message);
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
+  function classePrioridade(prioridade) {
+    if (prioridade === "Alta") {
+      return "badge text-bg-danger";
+    }
+
+    if (prioridade === "Média") {
+      return "badge text-bg-warning";
+    }
+
+    return "badge text-bg-primary";
+  }
+
+  function classeSituacao(situacao) {
+    if (situacao === "Concluída") {
+      return "badge text-bg-success";
+    }
+
+    if (situacao === "Pendente") {
+      return "badge badge-pendente";
+    }
+
+    return "badge text-bg-primary";
+  }
+
+  const tarefasFiltradas = tarefas.filter((tarefa) =>
+    tarefa.titulo.toLowerCase().includes(busca.toLowerCase())
+  );
 
   return (
     <>
@@ -32,130 +124,81 @@ export default function Home() {
         </div>
 
         <div className="mt-4">
-          <input type="text" className="form-control" placeholder="Buscar tarefa..." />
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Buscar tarefa..."
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+          />
         </div>
 
         <div className="mt-4 bg-white rounded shadow-sm p-3">
-          <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-light">
-                <tr>
-                  <th>#</th>
-                  <th>Título</th>
-                  <th>Prioridade</th>
-                  <th>Situação</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
+          {carregando && <p className="text-secondary mb-0">Carregando tarefas...</p>}
 
-              <tbody>
-                <tr>
-                  <td>1</td>
+          {erro && <div className="alert alert-danger mb-0">{erro}</div>}
 
-                  <td>Estudar API</td>
+          {!carregando && !erro && (
+            <div className="table-responsive">
+              <table className="table table-hover align-middle mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Título</th>
+                    <th>Prioridade</th>
+                    <th>Situação</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
 
-                  <td>
-                    <span className="badge text-bg-danger">Alta</span>
-                  </td>
+                <tbody>
+                  {tarefasFiltradas.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="text-center text-secondary py-4">
+                        Nenhuma tarefa encontrada.
+                      </td>
+                    </tr>
+                  ) : (
+                    tarefasFiltradas.map((tarefa) => (
+                      <tr key={tarefa.id}>
+                        <td>{tarefa.id}</td>
 
-                  <td>
-                    <span className="badge text-bg-primary">Em andamento</span>
-                  </td>
+                        <td>{tarefa.titulo}</td>
 
-                  <td>
-                    <Link
-                      href="/tarefas/editar/1"
-                      className="btn btn-sm btn-outline-primary me-2"
-                    >
-                      Editar
-                    </Link>
+                        <td>
+                          <span className={classePrioridade(tarefa.prioridade)}>
+                            {tarefa.prioridade}
+                          </span>
+                        </td>
 
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() =>
-                        setTarefaSelecionada({
-                          id: 1,
-                          titulo: "Estudar API",
-                        })
-                      }
-                    >
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
+                        <td>
+                          <span className={classeSituacao(tarefa.situacao)}>
+                            {tarefa.situacao}
+                          </span>
+                        </td>
 
-                <tr>
-                  <td>2</td>
+                        <td>
+                          <Link
+                            href={`/tarefas/editar/${tarefa.id}`}
+                            className="btn btn-sm btn-outline-primary me-2"
+                          >
+                            Editar
+                          </Link>
 
-                  <td>Finalizar projeto</td>
-
-                  <td>
-                    <span className="badge text-bg-warning">Média</span>
-                  </td>
-
-                  <td>
-                    <span className="badge badge-pendente">Pendente</span>
-                  </td>
-
-                  <td>
-                    <Link
-                      href="/tarefas/editar/2"
-                      className="btn btn-sm btn-outline-primary me-2"
-                    >
-                      Editar
-                    </Link>
-
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() =>
-                        setTarefaSelecionada({
-                          id: 2,
-                          titulo: "Finalizar projeto",
-                        })
-                      }
-                    >
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-
-                <tr>
-                  <td>3</td>
-
-                  <td>Revisar React</td>
-
-                  <td>
-                    <span className="badge text-bg-primary">Baixa</span>
-                  </td>
-
-                  <td>
-                    <span className="badge text-bg-success">Concluída</span>
-                  </td>
-
-                  <td>
-                    <Link
-                      href="/tarefas/editar/3"
-                      className="btn btn-sm btn-outline-primary me-2"
-                    >
-                      Editar
-                    </Link>
-
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() =>
-                        setTarefaSelecionada({
-                          id: 3,
-                          titulo: "Revisar React",
-                        })
-                      }
-                    >
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => setTarefaSelecionada(tarefa)}
+                          >
+                            Excluir
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </main>
 
@@ -183,15 +226,17 @@ export default function Home() {
                   <button
                     className="btn btn-secondary"
                     onClick={() => setTarefaSelecionada(null)}
+                    disabled={excluindo}
                   >
                     Cancelar
                   </button>
 
                   <button
                     className="btn btn-danger"
-                    onClick={() => setTarefaSelecionada(null)}
+                    onClick={excluirTarefa}
+                    disabled={excluindo}
                   >
-                    Excluir
+                    {excluindo ? "Excluindo..." : "Excluir"}
                   </button>
                 </div>
               </div>
