@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Header from "@/components/Header";
 
 export default function Home() {
   const [tarefas, setTarefas] = useState([]);
@@ -9,10 +10,18 @@ export default function Home() {
   const [carregando, setCarregando] = useState(true);
   const [excluindo, setExcluindo] = useState(false);
   const [erro, setErro] = useState("");
+  const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [busca, setBusca] = useState("");
 
   useEffect(() => {
     buscarTarefas();
+
+    const mensagem = sessionStorage.getItem("mensagemSucesso");
+
+    if (mensagem) {
+      setMensagemSucesso(mensagem);
+      sessionStorage.removeItem("mensagemSucesso");
+    }
   }, []);
 
   async function buscarTarefas() {
@@ -45,6 +54,7 @@ export default function Home() {
     try {
       setExcluindo(true);
       setErro("");
+      setMensagemSucesso("");
 
       const resposta = await fetch(
         `http://localhost:3001/tarefas/${tarefaSelecionada.id}`,
@@ -56,12 +66,16 @@ export default function Home() {
       if (!resposta.ok) {
         const dadosErro = await resposta.json();
 
-        throw new Error(dadosErro.mensagem || "Erro ao excluir tarefa");
+        throw new Error(
+          dadosErro.mensagem || "Erro ao excluir tarefa"
+        );
       }
 
       setTarefaSelecionada(null);
 
       await buscarTarefas();
+
+      setMensagemSucesso("Tarefa excluída com sucesso.");
     } catch (error) {
       console.error(error);
       setErro(error.message);
@@ -95,33 +109,56 @@ export default function Home() {
   }
 
   const tarefasFiltradas = tarefas.filter((tarefa) =>
-    tarefa.titulo.toLowerCase().includes(busca.toLowerCase())
+    tarefa.titulo
+      .toLowerCase()
+      .includes(busca.toLowerCase())
   );
 
   return (
     <>
-      <header className="taskflow-navbar py-3">
-        <div className="container d-flex justify-content-between align-items-center">
-          <div className="taskflow-logo text-white">
-            Task<span>Flow</span>
-          </div>
+      <Header />
 
-          <button className="btn text-white fs-4">☰</button>
-        </div>
-      </header>
-
-      <main className="container py-5">
-        <div className="d-flex justify-content-between align-items-center">
+      <main className="container py-4 py-md-5">
+        <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
           <div>
-            <h1 className="fw-bold mb-1">Minhas tarefas</h1>
+            <h1 className="fw-bold mb-1">
+              Minhas tarefas
+            </h1>
 
-            <p className="text-secondary mb-0">Organize e acompanhe suas atividades.</p>
+            <p className="text-secondary mb-0">
+              Organize e acompanhe suas atividades.
+            </p>
           </div>
 
-          <Link href="/tarefas/nova" className="btn btn-primary">
+          <Link
+            href="/tarefas/nova"
+            className="btn btn-primary align-self-start align-self-sm-auto"
+          >
             + Nova tarefa
           </Link>
         </div>
+
+        {mensagemSucesso && (
+          <div
+            className="alert alert-success alert-dismissible fade show mt-4"
+            role="alert"
+          >
+            {mensagemSucesso}
+
+            <button
+              type="button"
+              className="btn-close"
+              aria-label="Fechar"
+              onClick={() => setMensagemSucesso("")}
+            ></button>
+          </div>
+        )}
+
+        {erro && (
+          <div className="alert alert-danger mt-4">
+            {erro}
+          </div>
+        )}
 
         <div className="mt-4">
           <input
@@ -129,92 +166,187 @@ export default function Home() {
             className="form-control"
             placeholder="Buscar tarefa..."
             value={busca}
-            onChange={(event) => setBusca(event.target.value)}
+            onChange={(event) =>
+              setBusca(event.target.value)
+            }
           />
         </div>
 
-        <div className="mt-4 bg-white rounded shadow-sm p-3">
-          {carregando && <p className="text-secondary mb-0">Carregando tarefas...</p>}
+        <div className="mt-4">
+          {carregando && (
+            <div className="bg-white rounded shadow-sm p-3">
+              <p className="text-secondary mb-0">
+                Carregando tarefas...
+              </p>
+            </div>
+          )}
 
-          {erro && <div className="alert alert-danger mb-0">{erro}</div>}
+          {!carregando && !erro && tarefasFiltradas.length === 0 && (
+            <div className="bg-white rounded shadow-sm p-4 text-center text-secondary">
+              Nenhuma tarefa encontrada.
+            </div>
+          )}
 
-          {!carregando && !erro && (
-            <div className="table-responsive">
-              <table className="table table-hover align-middle mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th>#</th>
-                    <th>Título</th>
-                    <th>Prioridade</th>
-                    <th>Situação</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
+          {!carregando && !erro && tarefasFiltradas.length > 0 && (
+            <>
+              {/* VISUALIZAÇÃO PARA COMPUTADOR */}
+              <div className="d-none d-md-block bg-white rounded shadow-sm p-3">
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>#</th>
+                        <th>Título</th>
+                        <th>Prioridade</th>
+                        <th>Situação</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
 
-                <tbody>
-                  {tarefasFiltradas.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="text-center text-secondary py-4">
-                        Nenhuma tarefa encontrada.
-                      </td>
-                    </tr>
-                  ) : (
-                    tarefasFiltradas.map((tarefa) => (
-                      <tr key={tarefa.id}>
-                        <td>{tarefa.id}</td>
+                    <tbody>
+                      {tarefasFiltradas.map((tarefa) => (
+                        <tr key={tarefa.id}>
+                          <td>{tarefa.id}</td>
 
-                        <td>{tarefa.titulo}</td>
+                          <td>{tarefa.titulo}</td>
 
-                        <td>
-                          <span className={classePrioridade(tarefa.prioridade)}>
+                          <td>
+                            <span
+                              className={classePrioridade(
+                                tarefa.prioridade
+                              )}
+                            >
+                              {tarefa.prioridade}
+                            </span>
+                          </td>
+
+                          <td>
+                            <span
+                              className={classeSituacao(
+                                tarefa.situacao
+                              )}
+                            >
+                              {tarefa.situacao}
+                            </span>
+                          </td>
+
+                          <td>
+                            <Link
+                              href={`/tarefas/editar/${tarefa.id}`}
+                              className="btn btn-sm btn-outline-primary me-2"
+                            >
+                              Editar
+                            </Link>
+
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() =>
+                                setTarefaSelecionada(tarefa)
+                              }
+                            >
+                              Excluir
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* VISUALIZAÇÃO PARA CELULAR */}
+              <div className="d-md-none">
+                {tarefasFiltradas.map((tarefa) => (
+                  <div
+                    key={tarefa.id}
+                    className="card shadow-sm mb-3"
+                  >
+                    <div className="card-body">
+                      <div className="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                          <small className="text-secondary">
+                            Tarefa #{tarefa.id}
+                          </small>
+
+                          <h5 className="card-title fw-bold mt-1 mb-0">
+                            {tarefa.titulo}
+                          </h5>
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <p className="mb-2">
+                          <strong>Prioridade:</strong>{" "}
+                          <span
+                            className={classePrioridade(
+                              tarefa.prioridade
+                            )}
+                          >
                             {tarefa.prioridade}
                           </span>
-                        </td>
+                        </p>
 
-                        <td>
-                          <span className={classeSituacao(tarefa.situacao)}>
+                        <p className="mb-0">
+                          <strong>Situação:</strong>{" "}
+                          <span
+                            className={classeSituacao(
+                              tarefa.situacao
+                            )}
+                          >
                             {tarefa.situacao}
                           </span>
-                        </td>
+                        </p>
+                      </div>
 
-                        <td>
-                          <Link
-                            href={`/tarefas/editar/${tarefa.id}`}
-                            className="btn btn-sm btn-outline-primary me-2"
-                          >
-                            Editar
-                          </Link>
+                      <div className="d-flex gap-2 mt-4">
+                        <Link
+                          href={`/tarefas/editar/${tarefa.id}`}
+                          className="btn btn-outline-primary flex-fill"
+                        >
+                          Editar
+                        </Link>
 
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => setTarefaSelecionada(tarefa)}
-                          >
-                            Excluir
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        <button
+                          className="btn btn-outline-danger flex-fill"
+                          onClick={() =>
+                            setTarefaSelecionada(tarefa)
+                          }
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </main>
 
       {tarefaSelecionada && (
         <>
-          <div className="modal show d-block" tabIndex="-1">
+          <div
+            className="modal show d-block"
+            tabIndex="-1"
+            role="dialog"
+            aria-modal="true"
+          >
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
-                  <h5 className="modal-title fw-bold">Excluir tarefa</h5>
+                  <h5 className="modal-title fw-bold">
+                    Excluir tarefa
+                  </h5>
                 </div>
 
                 <div className="modal-body">
                   <p className="mb-2">
                     Tem certeza que deseja excluir a tarefa{" "}
-                    <strong>{tarefaSelecionada.titulo}</strong>?
+                    <strong>
+                      {tarefaSelecionada.titulo}
+                    </strong>
+                    ?
                   </p>
 
                   <p className="text-secondary mb-0">
@@ -225,7 +357,9 @@ export default function Home() {
                 <div className="modal-footer">
                   <button
                     className="btn btn-secondary"
-                    onClick={() => setTarefaSelecionada(null)}
+                    onClick={() =>
+                      setTarefaSelecionada(null)
+                    }
                     disabled={excluindo}
                   >
                     Cancelar
@@ -236,7 +370,9 @@ export default function Home() {
                     onClick={excluirTarefa}
                     disabled={excluindo}
                   >
-                    {excluindo ? "Excluindo..." : "Excluir"}
+                    {excluindo
+                      ? "Excluindo..."
+                      : "Excluir"}
                   </button>
                 </div>
               </div>

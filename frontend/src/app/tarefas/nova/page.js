@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Header from "@/components/Header";
 
 export default function NovaTarefa() {
   const router = useRouter();
@@ -38,13 +39,19 @@ export default function NovaTarefa() {
       if (!resposta.ok) {
         const dadosErro = await resposta.json();
 
-        throw new Error(dadosErro.mensagem || "Erro ao cadastrar tarefa");
+        throw new Error(
+          dadosErro.mensagem || "Erro ao cadastrar tarefa"
+        );
       }
+
+      sessionStorage.setItem(
+        "mensagemSucesso",
+        "Tarefa cadastrada com sucesso."
+      );
 
       router.push("/");
     } catch (error) {
       console.error(error);
-
       setErro(error.message);
     } finally {
       setSalvando(false);
@@ -53,15 +60,7 @@ export default function NovaTarefa() {
 
   return (
     <>
-      <header className="taskflow-navbar py-3">
-        <div className="container d-flex justify-content-between align-items-center">
-          <div className="taskflow-logo text-white">
-            Task<span>Flow</span>
-          </div>
-
-          <button className="btn text-white fs-4">☰</button>
-        </div>
-      </header>
+      <Header />
 
       <main className="container py-5">
         <Link href="/" className="text-decoration-none">
@@ -69,18 +68,27 @@ export default function NovaTarefa() {
         </Link>
 
         <div className="mt-3">
-          <h1 className="fw-bold mb-1">Nova tarefa</h1>
+          <h1 className="fw-bold mb-1">
+            Nova tarefa
+          </h1>
 
           <p className="text-secondary">
             Preencha os campos abaixo para criar uma nova tarefa.
           </p>
         </div>
 
-        {erro && <div className="alert alert-danger mt-4">{erro}</div>}
+        {erro && (
+          <div className="alert alert-danger mt-4">
+            {erro}
+          </div>
+        )}
 
         <form onSubmit={salvarTarefa}>
           <div className="mt-4">
-            <label htmlFor="titulo" className="form-label fw-semibold">
+            <label
+              htmlFor="titulo"
+              className="form-label fw-semibold"
+            >
               Título <span className="text-danger">*</span>
             </label>
 
@@ -96,7 +104,10 @@ export default function NovaTarefa() {
           </div>
 
           <div className="mt-4">
-            <label htmlFor="descricao" className="form-label fw-semibold">
+            <label
+              htmlFor="descricao"
+              className="form-label fw-semibold"
+            >
               Descrição
             </label>
 
@@ -112,7 +123,10 @@ export default function NovaTarefa() {
 
           <div className="row mt-4">
             <div className="col-md-6">
-              <label htmlFor="prioridade" className="form-label fw-semibold">
+              <label
+                htmlFor="prioridade"
+                className="form-label fw-semibold"
+              >
                 Prioridade <span className="text-danger">*</span>
               </label>
 
@@ -120,21 +134,26 @@ export default function NovaTarefa() {
                 id="prioridade"
                 className="form-select"
                 value={prioridade}
-                onChange={(event) => setPrioridade(event.target.value)}
+                onChange={(event) =>
+                  setPrioridade(event.target.value)
+                }
                 required
               >
-                <option value="">Selecione a prioridade</option>
+                <option value="">
+                  Selecione a prioridade
+                </option>
 
                 <option value="Alta">Alta</option>
-
                 <option value="Média">Média</option>
-
                 <option value="Baixa">Baixa</option>
               </select>
             </div>
 
             <div className="col-md-6">
-              <label htmlFor="situacao" className="form-label fw-semibold">
+              <label
+                htmlFor="situacao"
+                className="form-label fw-semibold"
+              >
                 Situação <span className="text-danger">*</span>
               </label>
 
@@ -142,16 +161,26 @@ export default function NovaTarefa() {
                 id="situacao"
                 className="form-select"
                 value={situacao}
-                onChange={(event) => setSituacao(event.target.value)}
+                onChange={(event) =>
+                  setSituacao(event.target.value)
+                }
                 required
               >
-                <option value="">Selecione a situação</option>
+                <option value="">
+                  Selecione a situação
+                </option>
 
-                <option value="Pendente">Pendente</option>
+                <option value="Pendente">
+                  Pendente
+                </option>
 
-                <option value="Em andamento">Em andamento</option>
+                <option value="Em andamento">
+                  Em andamento
+                </option>
 
-                <option value="Concluída">Concluída</option>
+                <option value="Concluída">
+                  Concluída
+                </option>
               </select>
             </div>
           </div>
@@ -161,7 +190,11 @@ export default function NovaTarefa() {
               Cancelar
             </Link>
 
-            <button type="submit" className="btn btn-primary" disabled={salvando}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={salvando}
+            >
               {salvando ? "Salvando..." : "Salvar tarefa"}
             </button>
           </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Header from "@/components/Header";
 
 export default function EditarTarefa() {
   const params = useParams();
@@ -25,7 +26,9 @@ export default function EditarTarefa() {
         setCarregando(true);
         setErro("");
 
-        const resposta = await fetch(`http://localhost:3001/tarefas/${id}`);
+        const resposta = await fetch(
+          `http://localhost:3001/tarefas/${id}`
+        );
 
         if (resposta.status === 404) {
           setErro("Tarefa não encontrada");
@@ -44,7 +47,6 @@ export default function EditarTarefa() {
         setSituacao(tarefa.situacao);
       } catch (error) {
         console.error(error);
-
         setErro("Não foi possível carregar a tarefa.");
       } finally {
         setCarregando(false);
@@ -63,18 +65,21 @@ export default function EditarTarefa() {
       setSalvando(true);
       setErro("");
 
-      const resposta = await fetch(`http://localhost:3001/tarefas/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          titulo,
-          descricao,
-          prioridade,
-          situacao,
-        }),
-      });
+      const resposta = await fetch(
+        `http://localhost:3001/tarefas/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            titulo,
+            descricao,
+            prioridade,
+            situacao,
+          }),
+        }
+      );
 
       if (resposta.status === 404) {
         setErro("Tarefa não encontrada");
@@ -84,14 +89,23 @@ export default function EditarTarefa() {
       if (!resposta.ok) {
         const dadosErro = await resposta.json();
 
-        throw new Error(dadosErro.mensagem || "Erro ao atualizar tarefa");
+        throw new Error(
+          dadosErro.mensagem || "Erro ao atualizar tarefa"
+        );
       }
+
+      sessionStorage.setItem(
+        "mensagemSucesso",
+        "Tarefa atualizada com sucesso."
+      );
 
       router.push("/");
     } catch (error) {
       console.error(error);
 
-      setErro(error.message || "Não foi possível atualizar a tarefa.");
+      setErro(
+        error.message || "Não foi possível atualizar a tarefa."
+      );
     } finally {
       setSalvando(false);
     }
@@ -99,15 +113,7 @@ export default function EditarTarefa() {
 
   return (
     <>
-      <header className="taskflow-navbar py-3">
-        <div className="container d-flex justify-content-between align-items-center">
-          <div className="taskflow-logo text-white">
-            Task<span>Flow</span>
-          </div>
-
-          <button className="btn text-white fs-4">☰</button>
-        </div>
-      </header>
+      <Header />
 
       <main className="container py-5">
         <Link href="/" className="text-decoration-none">
@@ -115,19 +121,34 @@ export default function EditarTarefa() {
         </Link>
 
         <div className="mt-3">
-          <h1 className="fw-bold mb-1">Editar tarefa</h1>
+          <h1 className="fw-bold mb-1">
+            Editar tarefa
+          </h1>
 
-          <p className="text-secondary">Altere os dados da tarefa conforme necessário.</p>
+          <p className="text-secondary">
+            Altere os dados da tarefa conforme necessário.
+          </p>
         </div>
 
-        {erro && <div className="alert alert-danger mt-4">{erro}</div>}
+        {erro && (
+          <div className="alert alert-danger mt-4">
+            {erro}
+          </div>
+        )}
 
-        {carregando && <p className="text-secondary mt-4">Carregando tarefa...</p>}
+        {carregando && (
+          <p className="text-secondary mt-4">
+            Carregando tarefa...
+          </p>
+        )}
 
         {!carregando && !erro && (
           <form onSubmit={atualizarTarefa}>
             <div className="mt-4">
-              <label htmlFor="titulo" className="form-label fw-semibold">
+              <label
+                htmlFor="titulo"
+                className="form-label fw-semibold"
+              >
                 Título <span className="text-danger">*</span>
               </label>
 
@@ -136,13 +157,18 @@ export default function EditarTarefa() {
                 type="text"
                 className="form-control"
                 value={titulo}
-                onChange={(event) => setTitulo(event.target.value)}
+                onChange={(event) =>
+                  setTitulo(event.target.value)
+                }
                 required
               />
             </div>
 
             <div className="mt-4">
-              <label htmlFor="descricao" className="form-label fw-semibold">
+              <label
+                htmlFor="descricao"
+                className="form-label fw-semibold"
+              >
                 Descrição
               </label>
 
@@ -151,59 +177,86 @@ export default function EditarTarefa() {
                 className="form-control"
                 rows="4"
                 value={descricao}
-                onChange={(event) => setDescricao(event.target.value)}
+                onChange={(event) =>
+                  setDescricao(event.target.value)
+                }
               ></textarea>
             </div>
 
             <div className="row mt-4">
               <div className="col-md-6">
-                <label htmlFor="prioridade" className="form-label fw-semibold">
-                  Prioridade <span className="text-danger">*</span>
+                <label
+                  htmlFor="prioridade"
+                  className="form-label fw-semibold"
+                >
+                  Prioridade{" "}
+                  <span className="text-danger">*</span>
                 </label>
 
                 <select
                   id="prioridade"
                   className="form-select"
                   value={prioridade}
-                  onChange={(event) => setPrioridade(event.target.value)}
+                  onChange={(event) =>
+                    setPrioridade(event.target.value)
+                  }
                   required
                 >
                   <option value="Alta">Alta</option>
-
                   <option value="Média">Média</option>
-
                   <option value="Baixa">Baixa</option>
                 </select>
               </div>
 
               <div className="col-md-6">
-                <label htmlFor="situacao" className="form-label fw-semibold">
-                  Situação <span className="text-danger">*</span>
+                <label
+                  htmlFor="situacao"
+                  className="form-label fw-semibold"
+                >
+                  Situação{" "}
+                  <span className="text-danger">*</span>
                 </label>
 
                 <select
                   id="situacao"
                   className="form-select"
                   value={situacao}
-                  onChange={(event) => setSituacao(event.target.value)}
+                  onChange={(event) =>
+                    setSituacao(event.target.value)
+                  }
                   required
                 >
-                  <option value="Pendente">Pendente</option>
+                  <option value="Pendente">
+                    Pendente
+                  </option>
 
-                  <option value="Em andamento">Em andamento</option>
+                  <option value="Em andamento">
+                    Em andamento
+                  </option>
 
-                  <option value="Concluída">Concluída</option>
+                  <option value="Concluída">
+                    Concluída
+                  </option>
                 </select>
               </div>
             </div>
 
             <div className="d-flex justify-content-end gap-2 mt-4">
-              <Link href="/" className="btn btn-secondary">
+              <Link
+                href="/"
+                className="btn btn-secondary"
+              >
                 Cancelar
               </Link>
 
-              <button type="submit" className="btn btn-primary" disabled={salvando}>
-                {salvando ? "Atualizando..." : "Atualizar tarefa"}
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={salvando}
+              >
+                {salvando
+                  ? "Atualizando..."
+                  : "Atualizar tarefa"}
               </button>
             </div>
           </form>
