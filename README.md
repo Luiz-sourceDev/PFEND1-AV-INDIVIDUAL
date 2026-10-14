@@ -50,6 +50,7 @@ Cada tarefa possui as seguintes informações:
 - Next.js
 - React
 - JavaScript
+- JSX
 - Bootstrap
 - App Router
 
@@ -80,20 +81,23 @@ PFEND1-AV-INDIVIDUAL/
 │
 ├── frontend/
 │   ├── public/
+│   │
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── tarefas/
 │   │   │   │   ├── editar/
 │   │   │   │   │   └── [id]/
-│   │   │   │   │       └── page.js
+│   │   │   │   │       └── page.jsx
+│   │   │   │   │
 │   │   │   │   └── nova/
-│   │   │   │       └── page.js
+│   │   │   │       └── page.jsx
+│   │   │   │
 │   │   │   ├── globals.css
-│   │   │   ├── layout.js
-│   │   │   └── page.js
+│   │   │   ├── layout.jsx
+│   │   │   └── page.jsx
 │   │   │
 │   │   └── components/
-│   │       └── Header.js
+│   │       └── Header.jsx
 │   │
 │   ├── package.json
 │   └── package-lock.json
@@ -420,7 +424,8 @@ Durante o desenvolvimento foram testados:
 - funcionamento em tela de computador;
 - funcionamento em tela de celular;
 - console do navegador;
-- terminais do front-end e back-end.
+- terminais do front-end e back-end;
+- build de produção do Next.js.
 
 ---
 
